@@ -1,4 +1,4 @@
-@startuml
+@startuml mailSlurpDB
 
 !define TRANSACTION CAE7F2
 
