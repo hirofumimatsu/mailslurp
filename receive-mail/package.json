@@ -12,6 +12,8 @@
     "prisma": "^2.28.0"
   },
   "dependencies": {
-    "@prisma/client": "^2.28.0"
+    "@prisma/client": "^2.28.0",
+    "Haraka": "^2.8.27",
+    "global": "^4.4.0"
   }
 }
