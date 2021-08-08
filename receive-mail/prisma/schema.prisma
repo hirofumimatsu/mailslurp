@@ -34,5 +34,6 @@ model User {
   email     String    @unique
   name      String
   password  String
+  apiKey    String
   mailboxes Mailbox[]
 }
