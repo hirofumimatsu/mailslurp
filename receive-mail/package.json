@@ -1,0 +1,17 @@
+{
+  "name": "receive-mail",
+  "version": "0.0.1",
+  "description": "メールを受信する",
+  "main": "app.js",
+  "scripts": {
+    "test": "npx jest"
+  },
+  "author": "Hirofumi MATSUMOTO",
+  "license": "MIT",
+  "devDependencies": {
+    "prisma": "^2.28.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^2.28.0"
+  }
+}
