@@ -12,7 +12,11 @@ generator client {
 
 model Message {
   id        Int      @default(autoincrement()) @id
-  email     String   @unique
+  subject   String
+  from      String
+  to        String
+  date      String
+  body      String   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   mailboxes Mailbox  @relation(fields: [mailboxId], references: [id])
