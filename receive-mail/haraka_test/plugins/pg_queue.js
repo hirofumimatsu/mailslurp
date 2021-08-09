@@ -45,11 +45,14 @@ exports.pg_queue = async function (next, connection, params) {
   date = Date.parse(date).toString();
   const body = txn.body.bodytext ?? "";
 
+  // メールボックスの存在確認
   const mailbox = await prisma.mailbox.findUnique({
     where: {
       email: emailto[0].user + "@" + emailto[0].host,
     },
   });
+
+  // メールボックスがあったらDBにつっこみ、無かったらハードエラーを返して切断する
   if (mailbox) {
     await prisma.message.create({
       data: {
