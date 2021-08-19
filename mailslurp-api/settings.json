@@ -1,0 +1,7 @@
+{
+  "endpoint": {
+    "schema": "http",
+    "domain": "localhost",
+    "port": "3000"
+  }
+}
