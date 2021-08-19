@@ -1,4 +1,5 @@
 {
+  "emailDomain": "catbot.club",
   "endpoint": {
     "schema": "http",
     "domain": "localhost",
