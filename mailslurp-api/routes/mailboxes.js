@@ -147,4 +147,105 @@ router.delete("/:mailboxId", async function (req, res, next) {
   }
 });
 
+const buildMessageList = (mailbox) => {
+  let messageArray = [];
+  const server = buildAPIServer();
+  let messages = mailbox.messages;
+  for (const message of messages) {
+    const messageItem = {
+      messageId: message.id,
+      subject: message.subject,
+      from: message.from,
+      to: message.to,
+      date: new Date(parseInt(message.date)),
+      body: message.body,
+      createdAt: message.createdAt,
+      updatedAt: message.updatedAt,
+      link: server + "mailboxes/" + mailbox.id + "/messages/" + message.id,
+    };
+    messageArray.push(messageItem);
+  }
+  return messageArray;
+};
+
+// メッセージ一覧表示
+router.get("/:mailboxId/messages", async function (req, res, next) {
+  const mailboxId = parseInt(req.params.mailboxId);
+
+  try {
+    const mailbox = await prisma.mailbox.findUnique({
+      where: { id: mailboxId },
+      include: {
+        messages: true,
+      },
+    });
+    const response = {
+      mailboxId: mailboxId,
+      messages: buildMessageList(mailbox),
+    };
+    res.status(StatusCodes.OK).send(response);
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+      error: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
+    });
+  }
+});
+
+// メッセージ詳細表示
+router.get("/:mailboxId/messages/:messageId", async function (req, res, next) {
+  const mailboxId = parseInt(req.params.mailboxId);
+  const messageId = parseInt(req.params.messageId);
+  const server = buildAPIServer();
+
+  try {
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+    });
+    const messageItem = {
+      messageId: message.id,
+      subject: message.subject,
+      from: message.from,
+      to: message.to,
+      date: new Date(parseInt(message.date)),
+      body: message.body,
+      createdAt: message.createdAt,
+      updatedAt: message.updatedAt,
+      link: server + "mailboxes/" + mailboxId + "/messages/" + message.id,
+    };
+    res.status(StatusCodes.OK).send(messageItem);
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+      error: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
+    });
+  }
+});
+
+router.delete(
+  "/:mailboxId/messages/:messageId",
+  async function (req, res, next) {
+    const messageId = parseInt(req.params.messageId);
+    try {
+      await prisma.message
+        .findUnique({
+          where: { id: messageId },
+        })
+        .then(async (message) => {
+          if (message) {
+            await prisma.message.delete({
+              where: { id: messageId },
+            });
+            res.status(StatusCodes.OK).send();
+          } else {
+            res.status(StatusCodes.NOT_FOUND).send();
+          }
+        });
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+        error: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
+      });
+    }
+  }
+);
+//
+
 module.exports = router;
