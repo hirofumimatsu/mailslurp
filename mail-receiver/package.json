@@ -4,6 +4,7 @@
   "description": "メールを受信する",
   "main": "app.js",
   "scripts": {
+    "start": "sudo npx haraka -c ./haraka_test",
     "test": "npx jest"
   },
   "author": "Hirofumi MATSUMOTO",
