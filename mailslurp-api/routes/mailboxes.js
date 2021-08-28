@@ -133,9 +133,6 @@ router.delete("/:mailboxId", async function (req, res, next) {
             .then((mailbox) => {
               res.status(StatusCodes.OK).send();
             });
-        })
-        .catch((error) => {
-          res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
         });
     } else {
       res.status(StatusCodes.NOT_FOUND).send();
@@ -201,18 +198,22 @@ router.get("/:mailboxId/messages/:messageId", async function (req, res, next) {
     const message = await prisma.message.findUnique({
       where: { id: messageId },
     });
-    const messageItem = {
-      messageId: message.id,
-      subject: message.subject,
-      from: message.from,
-      to: message.to,
-      date: new Date(parseInt(message.date)),
-      body: message.body,
-      createdAt: message.createdAt,
-      updatedAt: message.updatedAt,
-      link: server + "mailboxes/" + mailboxId + "/messages/" + message.id,
-    };
-    res.status(StatusCodes.OK).send(messageItem);
+    if (message) {
+      const messageItem = {
+        messageId: message.id,
+        subject: message.subject,
+        from: message.from,
+        to: message.to,
+        date: new Date(parseInt(message.date)),
+        body: message.body,
+        createdAt: message.createdAt,
+        updatedAt: message.updatedAt,
+        link: server + "mailboxes/" + mailboxId + "/messages/" + message.id,
+      };
+      res.status(StatusCodes.OK).send(messageItem);
+    } else {
+      res.status(StatusCodes.NOT_FOUND).send();
+    }
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
       error: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
