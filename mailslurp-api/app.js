@@ -9,6 +9,7 @@ const swaggerDocument = require("./openapi/swagger.json");
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var mailboxesRouter = require("./routes/mailboxes");
+var authRouter = require("./routes/auth");
 
 var app = express();
 
@@ -25,6 +26,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/mailboxes", mailboxesRouter);
+app.use("/auth", authRouter);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // catch 404 and forward to error handler
