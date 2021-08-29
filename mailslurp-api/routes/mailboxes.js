@@ -10,6 +10,7 @@ const ReasonPhrases = status.ReasonPhrases;
 const StatusCodes = status.StatusCodes;
 const getReasonPhrase = status.getReasonPhrase;
 const getStatusCode = status.getStatusCode;
+const auth = require("../middlewares/auth");
 
 const buildAPIServer = () => {
   const schema = settings.endpoint.schema;
@@ -39,7 +40,7 @@ const buildMailboxesResponse = (mailboxes) => {
 };
 
 // メールボックス詳細表示
-router.get("/:mailboxId", async function (req, res, next) {
+router.get("/:mailboxId", auth, async function (req, res, next) {
   const server = buildAPIServer();
   const mailbox = prisma.mailbox
     .findUnique({
@@ -64,7 +65,7 @@ router.get("/:mailboxId", async function (req, res, next) {
 });
 
 // メールボックス一覧表示
-router.get("/", async function (req, res, next) {
+router.get("/", auth, async function (req, res, next) {
   try {
     const mailboxes = await prisma.mailbox.findMany();
     const response = {
@@ -90,7 +91,7 @@ const createMailbox = async () => {
 };
 
 // メールボックス作成
-router.post("/", async function (req, res, next) {
+router.post("/", auth, async function (req, res, next) {
   const uuid = uuidv4();
   const server = buildAPIServer();
 
@@ -109,7 +110,7 @@ router.post("/", async function (req, res, next) {
 });
 
 // メールボックス削除
-router.delete("/:mailboxId", async function (req, res, next) {
+router.delete("/:mailboxId", auth, async function (req, res, next) {
   const mailboxId = parseInt(req.params.mailboxId);
   try {
     const mailbox = await prisma.mailbox.findUnique({
@@ -166,7 +167,7 @@ const buildMessageList = (mailbox) => {
 };
 
 // メッセージ一覧表示
-router.get("/:mailboxId/messages", async function (req, res, next) {
+router.get("/:mailboxId/messages", auth, async function (req, res, next) {
   const mailboxId = parseInt(req.params.mailboxId);
 
   try {
@@ -189,40 +190,45 @@ router.get("/:mailboxId/messages", async function (req, res, next) {
 });
 
 // メッセージ詳細表示
-router.get("/:mailboxId/messages/:messageId", async function (req, res, next) {
-  const mailboxId = parseInt(req.params.mailboxId);
-  const messageId = parseInt(req.params.messageId);
-  const server = buildAPIServer();
+router.get(
+  "/:mailboxId/messages/:messageId",
+  auth,
+  async function (req, res, next) {
+    const mailboxId = parseInt(req.params.mailboxId);
+    const messageId = parseInt(req.params.messageId);
+    const server = buildAPIServer();
 
-  try {
-    const message = await prisma.message.findUnique({
-      where: { id: messageId },
-    });
-    if (message) {
-      const messageItem = {
-        messageId: message.id,
-        subject: message.subject,
-        from: message.from,
-        to: message.to,
-        date: new Date(parseInt(message.date)),
-        body: message.body,
-        createdAt: message.createdAt,
-        updatedAt: message.updatedAt,
-        link: server + "mailboxes/" + mailboxId + "/messages/" + message.id,
-      };
-      res.status(StatusCodes.OK).send(messageItem);
-    } else {
-      res.status(StatusCodes.NOT_FOUND).send();
+    try {
+      const message = await prisma.message.findUnique({
+        where: { id: messageId },
+      });
+      if (message) {
+        const messageItem = {
+          messageId: message.id,
+          subject: message.subject,
+          from: message.from,
+          to: message.to,
+          date: new Date(parseInt(message.date)),
+          body: message.body,
+          createdAt: message.createdAt,
+          updatedAt: message.updatedAt,
+          link: server + "mailboxes/" + mailboxId + "/messages/" + message.id,
+        };
+        res.status(StatusCodes.OK).send(messageItem);
+      } else {
+        res.status(StatusCodes.NOT_FOUND).send();
+      }
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+        error: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
+      });
     }
-  } catch (error) {
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
-      error: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
-    });
   }
-});
+);
 
 router.delete(
   "/:mailboxId/messages/:messageId",
+  auth,
   async function (req, res, next) {
     const messageId = parseInt(req.params.messageId);
     try {
