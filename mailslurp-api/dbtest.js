@@ -10,7 +10,15 @@ async function main() {
   //  },
   //});
   //
-  const allUsers = await prisma.user.findMany();
+  const allUsers = await prisma.mailbox.findMany({
+    where: {
+      id: 34,
+      userId: 3,
+    },
+    select: {
+      messages: true,
+    },
+  });
   console.dir(allUsers, { depth: null });
 }
 

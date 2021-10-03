@@ -1,5 +1,6 @@
 const auth = require("../services/auth.service");
 const createError = require("http-errors");
+
 class authController {
   static register = async (req, res, next) => {
     try {
@@ -37,5 +38,12 @@ class authController {
       next(createError(e.statusCode, e.message));
     }
   };
+
+  // static delete = async(req,res,next) => {
+  //   try{
+  //     const user = await auth.delete(req.params.userId)
+  //
+  //   }
+  // }
 }
 module.exports = authController;

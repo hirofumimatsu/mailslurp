@@ -66,8 +66,11 @@ router.get("/:mailboxId", auth, async function (req, res, next) {
 
 // メールボックス一覧表示
 router.get("/", auth, async function (req, res, next) {
+  const userId = req.user.payload.id;
   try {
-    const mailboxes = await prisma.mailbox.findMany();
+    const mailboxes = await prisma.mailbox.findMany({
+      where: { userId: userId },
+    });
     const response = {
       mailboxes: buildMailboxesResponse(mailboxes),
     };
@@ -79,12 +82,12 @@ router.get("/", auth, async function (req, res, next) {
   }
 });
 
-const createMailbox = async () => {
+const createMailbox = async (userId) => {
   const uuid = uuidv4();
   const newMailbox = await prisma.mailbox.create({
     data: {
       email: uuid + "@" + settings.emailDomain,
-      userId: 1,
+      userId: userId,
     },
   });
   return newMailbox;
@@ -94,9 +97,10 @@ const createMailbox = async () => {
 router.post("/", auth, async function (req, res, next) {
   const uuid = uuidv4();
   const server = buildAPIServer();
+  const userId = req.user.payload.id;
 
   try {
-    const newMailbox = await createMailbox();
+    const newMailbox = await createMailbox(userId);
     res.status(StatusCodes.CREATED).send({
       mailboxId: newMailbox.id,
       email: newMailbox.email,
@@ -111,30 +115,30 @@ router.post("/", auth, async function (req, res, next) {
 
 // メールボックス削除
 router.delete("/:mailboxId", auth, async function (req, res, next) {
+  const userId = req.user.payload.id;
   const mailboxId = parseInt(req.params.mailboxId);
   try {
-    const mailbox = await prisma.mailbox.findUnique({
-      where: { id: mailboxId },
+    const mailbox = await prisma.mailbox.findMany({
+      where: { id: mailboxId, userId: userId },
     });
     if (mailbox) {
-      await prisma.mailbox
-        .update({
-          where: { id: mailboxId },
-          data: {
-            messages: {
-              deleteMany: {},
-            },
-          },
-        })
-        .then(async (mailbox) => {
-          await prisma.mailbox
-            .delete({
-              where: { id: mailboxId },
-            })
-            .then((mailbox) => {
-              res.status(StatusCodes.OK).send();
-            });
-        });
+      const deleteMessages = prisma.message.deleteMany({
+        where: {
+          mailboxId: mailboxId,
+        },
+      });
+
+      const deleteMailbox = prisma.mailbox.delete({
+        where: {
+          id: mailboxId,
+        },
+      });
+
+      const transaction = await prisma.$transaction([
+        deleteMessages,
+        deleteMailbox,
+      ]);
+      res.status(StatusCodes.OK).send();
     } else {
       res.status(StatusCodes.NOT_FOUND).send();
     }
@@ -168,13 +172,14 @@ const buildMessageList = (mailbox) => {
 
 // メッセージ一覧表示
 router.get("/:mailboxId/messages", auth, async function (req, res, next) {
+  const userId = req.user.payload.id;
   const mailboxId = parseInt(req.params.mailboxId);
 
   try {
-    const mailbox = await prisma.mailbox.findUnique({
-      where: { id: mailboxId },
+    const mailbox = await prisma.user.findUnique({
+      where: { id: userId },
       include: {
-        messages: true,
+        mailbox: true,
       },
     });
     const response = {
@@ -194,13 +199,14 @@ router.get(
   "/:mailboxId/messages/:messageId",
   auth,
   async function (req, res, next) {
+    const userId = req.user.payload.id;
     const mailboxId = parseInt(req.params.mailboxId);
     const messageId = parseInt(req.params.messageId);
     const server = buildAPIServer();
 
     try {
       const message = await prisma.message.findUnique({
-        where: { id: messageId },
+        where: { id: messageId, userId: userId },
       });
       if (message) {
         const messageItem = {
